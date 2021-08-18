@@ -1,0 +1,39 @@
+<apex:page standardController="Account" extensions="ExtOne">
+    <apex:pageMessages></apex:pageMessages>
+    <apex:form >
+        <apex:pageBlock title="Account">
+            <apex:pageBlockSection >
+                <apex:inputField value="{!Account.Name}"/>
+                <apex:inputField value="{!Account.AccountNumber}"/>
+                <apex:inputField value="{!Account.Type}"/>
+                <apex:inputField value="{!Account.Active__c}"/>
+                <apex:inputField value="{!Account.Phone}"/>
+                <apex:inputField value="{!Account.Fax}"/>
+            </apex:pageBlockSection>
+            <apex:commandButton action="{!save}" value="Save"/>
+            <apex:commandButton action="{!cancel}" value="Cancel"/>
+        </apex:pageBlock>
+    </apex:form>
+    
+    <apex:form >
+        <apex:pageBlock title="Search Contacts">
+            <apex:inputText value="{!searchKey}" label="input"/>
+            <apex:commandButton value="Search" action="{!search}"/>
+            <apex:commandButton value="Reset" action="{!reset}"/>
+        </apex:pageBlock>
+        <apex:pageBlock title="Contact List">
+            <apex:pageBlockTable value="{!contacts}" var="contact">
+                <apex:column value="{!contact.LastName}" headerValue="Name"/>
+                <apex:column value="{!contact.Title}"/>
+                <apex:column value="{!contact.Phone}"/>
+                <apex:column value="{!contact.Is_Primary_Contact__c}"/>
+                <apex:column headerValue="Set Primary Contact">
+                    <apex:commandLink value="Set as Primary" action="{!setAsPrimary}" onclick="return confirm('Do you want to proceed?')" rendered="{!NOT(contact.Is_Primary_Contact__c)}">
+                        <apex:param name="contactId" value="{!contact.Id}" assignTo="{!contactId}"/>                 
+                    </apex:commandLink>
+                    <apex:outputText value="Current Primary Contact" rendered="{!contact.Is_Primary_Contact__c}"/>
+                </apex:column>
+            </apex:pageBlockTable>
+        </apex:pageBlock>
+    </apex:form>
+</apex:page>

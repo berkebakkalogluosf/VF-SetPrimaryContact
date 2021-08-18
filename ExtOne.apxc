@@ -1,0 +1,60 @@
+public class ExtOne {
+    public List<Contact> contacts;
+    public String searchKey {get; set;}
+    public Id contactId {get; set;}
+    public Boolean inSearch = false;
+    private final Account account;
+    
+    
+    public ExtOne(ApexPages.StandardController stdController) {
+        this.account = (Account) stdController.getRecord();
+    }
+    
+    public List<Contact> getContacts() {
+        List<Contact> contacts;
+        
+        try {
+            if(this.inSearch) {
+                contacts = [SELECT Id, LastName, Title, Phone, Is_Primary_Contact__c FROM Contact WHERE AccountId =: this.account.Id AND LastName LIKE :this.searchKey LIMIT 1000];
+            } else {
+                contacts = [SELECT Id, LastName, Title, Phone, Is_Primary_Contact__c FROM Contact WHERE AccountId =: this.account.Id LIMIT 1000];
+            }
+        } catch (QueryException e) {
+            ApexPages.addMessages(e);
+        } 
+        
+        return contacts;
+    }
+    
+    public void search() {
+        this.inSearch = true;
+    }
+    
+    public void reset() {
+        this.inSearch = false;
+    }
+    
+    public void setAsPrimary() {
+        
+        try {
+            Contact primaryContact = [SELECT Id, LastName, Is_Primary_Contact__c FROM Contact WHERE Id =: this.contactId];
+            
+            List<Contact> remainingContacts = [SELECT Id, Is_Primary_Contact__c FROM Contact WHERE Id !=: this.contactId AND AccountId =: this.account.Id];
+            
+            primaryContact.Is_Primary_Contact__c = true;
+            
+            for (Contact contact : remainingContacts) {
+                contact.Is_Primary_Contact__c = false;
+            }
+            
+            remainingContacts.add(primaryContact);
+            
+            update remainingContacts;
+            
+        } catch (QueryException e) {
+            ApexPages.addMessages(e);
+        } catch (DMLException e) {
+            ApexPages.addMessages(e);
+        }
+    }
+}
