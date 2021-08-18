@@ -1,13 +1,14 @@
 @isTest
 private class ExtOneTest {
-
-    @isTest
-    private static void extensionTest() {
-        Account account = new Account();
-        account.Name = 'Test Account';
-        
+    
+    private static Account initAccount() {
+        Account account = new Account(Name='Test Account');
         insert account;
         
+        return account;
+    }
+    
+    private static List<Contact> initContacts(Account account) {
         List<Contact> contacts = new List<Contact>();
         for (Integer i = 0; i < 1000; i++) {
             Contact contact = new Contact();
@@ -16,27 +17,67 @@ private class ExtOneTest {
             
             contacts.add(contact);
         }
-        
         insert contacts;
         
+        return contacts;
+    }
+    
+    private static ExtOne initExtension(Account account) {
         ApexPages.currentPage().getParameters().put('id', account.Id);
         ApexPages.StandardController stdController = new ApexPages.StandardController(Account);
         ExtOne extOne = new ExtOne(stdController);
         
-        // search Test
+        return extOne;
+    }
+    
+    @isTest
+    private static void testSearch() {
+        Account account = initAccount();
+        List<Contact> contacts = initContacts(account);
+        ExtOne extOne = initExtension(account);
+        
+        Test.startTest();
         extOne.search();
-        Boolean search = extOne.inSearch;
+        Test.stopTest();
         
-        // reset Test
+        System.assertEquals(true, extOne.inSearch);
+    }
+    
+    @isTest
+    private static void testReset() {
+        Account account = initAccount();
+        List<Contact> contacts = initContacts(account);
+        ExtOne extOne = initExtension(account);
+        
+        Test.startTest();
         extOne.reset();
-        Boolean reset = extOne.inSearch;
+        Test.stopTest();
         
-        // getContacts inSearch Test
+        System.assertEquals(false, extOne.inSearch);
+    }
+    
+    @isTest
+    private static void testGetContactsInSearch() {
+        Account account = initAccount();
+        List<Contact> contacts = initContacts(account);
+        ExtOne extOne = initExtension(account);
+        
+        Test.startTest();
         extOne.searchKey = 'test0';
         extOne.inSearch = true;
         Contact searchedContact = extOne.getContacts()[0];
+        Test.stopTest();
         
-        // getContacts !inSearch Test
+        System.assertEquals(contacts[0].Id, searchedContact.Id);
+    }
+    
+    @isTest
+    private static void testGetContactsNotInSearch() {
+        Account account = initAccount();
+        List<Contact> contacts = initContacts(account);
+        ExtOne extOne = initExtension(account);
+        
+        Test.startTest();
         extOne.inSearch = false;
         List<Contact> allContacts = extOne.getContacts();
         
@@ -49,16 +90,23 @@ private class ExtOneTest {
         for (Contact cont: allContacts) {
             actualIds.add(cont.Id);
         }
+        Test.stopTest();
         
-        // setAsPrimary Test
+        System.assertEquals(expectedIds, actualIds);
+    }
+    
+    @isTest
+    private static void testSetAsPrimary() {
+        Account account = initAccount();
+        List<Contact> contacts = initContacts(account);
+        ExtOne extOne = initExtension(account);
+        
+        Test.startTest();
         extOne.contactId = contacts[0].Id;
         extOne.setAsPrimary();
         List<Contact> primaryContacts = [SELECT Id, Is_Primary_Contact__c FROM Contact WHERE Is_Primary_Contact__c = true AND AccountId =: account.Id];
+        Test.stopTest();
         
-        System.assertEquals(true, search);
-        System.assertEquals(false, reset);
-        System.assertEquals(contacts[0].Id, searchedContact.Id);
-        System.assertEquals(expectedIds, actualIds);
         System.assertEquals(1, primaryContacts.size());
     }
 }
